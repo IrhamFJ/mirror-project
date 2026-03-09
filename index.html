@@ -6,32 +6,40 @@
     <title>MirrorAnywhere | Ultra Low Latency</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        :root { --main: #00f2ff; --bg: #0a0a0a; --card: #161616; }
+        :root { --main: #00f2ff; --bg: #0a0a0a; --card: #161616; --accent: #0062ff; }
         body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: #fff; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
         
-        /* Menu Utama */
+        /* Container Utama */
         #app-container { width: 90%; max-width: 450px; text-align: center; transition: 0.4s; }
-        .logo { font-size: 2rem; font-weight: 800; background: linear-gradient(to right, #00f2ff, #0062ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 30px; }
+        .logo { font-size: 2.2rem; font-weight: 800; background: linear-gradient(to right, var(--main), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 30px; letter-spacing: -1px; }
         
+        /* Menu Pemilihan Mode */
         .mode-card { background: var(--card); border: 1px solid #222; border-radius: 20px; padding: 20px; margin-bottom: 15px; cursor: pointer; transition: 0.3s; text-align: left; display: flex; align-items: center; }
-        .mode-card:hover { border-color: var(--main); background: #1c1c1c; transform: scale(1.02); }
+        .mode-card:hover { border-color: var(--main); background: #1c1c1c; transform: translateY(-3px); }
         .mode-icon { font-size: 2.5rem; margin-right: 20px; }
-        .mode-info h3 { margin: 0; font-size: 1.1rem; }
+        .mode-info h3 { margin: 0; font-size: 1.1rem; color: #eee; }
         .mode-info p { margin: 5px 0 0; font-size: 0.8rem; color: #888; }
 
         /* Control Panel */
-        #setup-panel { display: none; background: var(--card); padding: 30px; border-radius: 25px; border: 1px solid #333; width: 100%; }
-        .id-badge { background: #000; padding: 12px; border-radius: 12px; font-family: 'Courier New', monospace; color: var(--main); border: 1px solid #333; margin: 20px 0; font-size: 1.2rem; cursor: pointer; }
-        input { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #333; background: #000; color: #fff; margin-bottom: 15px; box-sizing: border-box; outline: none; }
-        input:focus { border-color: var(--main); }
-        .btn-primary { width: 100%; padding: 15px; border-radius: 12px; border: none; background: var(--main); color: #000; font-weight: bold; font-size: 1rem; cursor: pointer; box-shadow: 0 5px 15px rgba(0, 242, 255, 0.3); }
+        #setup-panel { display: none; background: var(--card); padding: 30px; border-radius: 25px; border: 1px solid #333; width: 100%; box-sizing: border-box; }
+        .id-badge { background: #000; padding: 15px; border-radius: 12px; font-family: 'Courier New', monospace; color: var(--main); border: 1px solid #333; margin: 20px 0; font-size: 1.3rem; cursor: pointer; position: relative; transition: 0.2s; }
+        .id-badge:active { transform: scale(0.95); }
         
-        /* Video Fullscreen */
+        input { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #333; background: #000; color: #fff; margin-bottom: 15px; box-sizing: border-box; outline: none; text-align: center; font-size: 1rem; }
+        input:focus { border-color: var(--main); box-shadow: 0 0 10px rgba(0, 242, 255, 0.1); }
+        
+        .btn-primary { width: 100%; padding: 15px; border-radius: 12px; border: none; background: var(--main); color: #000; font-weight: bold; font-size: 1rem; cursor: pointer; box-shadow: 0 5px 15px rgba(0, 242, 255, 0.2); transition: 0.3s; }
+        .btn-primary:hover { background: #fff; }
+        
+        /* Video Overlay */
         #video-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: none; z-index: 1000; }
         video { width: 100%; height: 100%; object-fit: contain; }
-        .close-stream { position: absolute; top: 20px; right: 20px; background: rgba(255,0,0,0.6); color: #fff; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; z-index: 1001; }
+        .close-stream { position: absolute; top: 20px; right: 20px; background: rgba(255, 75, 75, 0.8); color: #fff; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; z-index: 1001; transition: 0.3s; }
+        .close-stream:hover { background: #ff4b4b; }
 
-        .status-dot { width: 10px; height: 10px; background: #ff4b4b; border-radius: 50%; display: inline-block; margin-right: 8px; }
+        /* Status Indicators */
+        #conn-status { font-size: 0.9rem; color: #aaa; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; }
+        .status-dot { width: 10px; height: 10px; background: #ff4b4b; border-radius: 50%; display: inline-block; margin-right: 10px; }
         .status-online { background: #00ff88; box-shadow: 0 0 10px #00ff88; }
     </style>
 </head>
@@ -44,33 +52,38 @@
             <div class="mode-card" onclick="startApp('hp')">
                 <div class="mode-icon">📱</div>
                 <div class="mode-info">
-                    <h3>Mode HP ke HP</h3>
-                    <p>Optimasi Low-Bandwidth & Portait.</p>
+                    <h3>Mode HP / Portait</h3>
+                    <p>Optimasi untuk layar vertikal & hemat data.</p>
                 </div>
             </div>
             <div class="mode-card" onclick="startApp('tv')">
                 <div class="mode-icon">📺</div>
                 <div class="mode-info">
-                    <h3>Mode HP ke TV</h3>
-                    <p>Fokus Kualitas HD & Wide Screen.</p>
+                    <h3>Mode TV / Wide</h3>
+                    <p>Kualitas HD & Full Screen landscape.</p>
                 </div>
             </div>
-            <p style="font-size: 0.7rem; color: #555;">v1.0 Stable - Powered by WebRTC P2P</p>
+            <p style="font-size: 0.75rem; color: #444; margin-top: 20px;">v1.2 Stable | P2P Encrypted</p>
         </div>
 
         <div id="setup-panel">
-            <div id="conn-status"><span class="status-dot" id="dot"></span><span id="stat-text">Connecting to Server...</span></div>
-            <div class="id-badge" id="my-id" onclick="copyID()">Generating...</div>
-            <p style="font-size: 0.8rem; color: #777;">Klik ID di atas untuk menyalin</p>
+            <div id="conn-status">
+                <span class="status-dot" id="dot"></span>
+                <span id="stat-text">Menghubungkan ke server...</span>
+            </div>
+            
+            <div class="id-badge" id="my-id" onclick="copyID()">Menyiapkan ID...</div>
+            <p style="font-size: 0.8rem; color: #666; margin-bottom: 25px;">Berikan ID ini ke teman atau masukkan ID teman di bawah.</p>
             
             <input type="text" id="peer-id-input" placeholder="Masukkan ID Tujuan">
             <button class="btn-primary" onclick="connectToPeer()">MULAI MIRRORING</button>
-            <button onclick="location.reload()" style="background:none; border:none; color:#555; margin-top:20px; cursor:pointer;">← Kembali</button>
+            
+            <button onclick="location.reload()" style="background:none; border:none; color:#555; margin-top:25px; cursor:pointer; font-size: 0.9rem;">← Ganti Mode</button>
         </div>
     </div>
 
     <div id="video-overlay">
-        <button class="close-stream" onclick="stopStream()">Stop & Exit</button>
+        <button class="close-stream" onclick="stopStream()">HENTIKAN</button>
         <video id="remote-video" autoplay playsinline></video>
     </div>
 
@@ -80,12 +93,12 @@
         let activeStream;
         let selectedMode = '';
 
-        // Inisialisasi PeerJS
+        // 1. Inisialisasi PeerJS
         function initPeer() {
             peer = new Peer({
                 config: {'iceServers': [
-                    { url: 'stun:stun.l.google.com:19302' },
-                    { url: 'stun:stun1.l.google.com:19302' }
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' }
                 ]}
             });
 
@@ -93,25 +106,29 @@
                 myId = id;
                 document.getElementById('my-id').innerText = id;
                 document.getElementById('dot').classList.add('status-online');
-                document.getElementById('stat-text').innerText = "Server Ready";
+                document.getElementById('stat-text').innerText = "Online & Siap";
             });
 
-            // Mendengar Panggilan (Sisi Penerima)
+            // LOGIKA PENERIMA: Jika ada panggilan masuk
             peer.on('call', (call) => {
-                call.answer();
-                call.on('stream', (stream) => {
+                call.answer(); // Menjawab panggilan
+                call.on('stream', (remoteStream) => {
                     const video = document.getElementById('remote-video');
-                    video.srcObject = stream;
+                    video.srcObject = remoteStream;
                     document.getElementById('video-overlay').style.display = 'block';
+                    
+                    // Deteksi jika pengirim mematikan sharing
+                    remoteStream.getVideoTracks()[0].onended = () => stopStream();
                 });
             });
 
             peer.on('error', (err) => {
-                console.error(err);
-                alert("Koneksi Error: " + err.type);
+                console.error("PeerJS Error:", err);
+                alert("Koneksi bermasalah: " + err.type);
             });
         }
 
+        // 2. Pilih Mode
         function startApp(mode) {
             selectedMode = mode;
             document.getElementById('mode-selection').style.display = 'none';
@@ -119,40 +136,61 @@
             initPeer();
         }
 
+        // 3. LOGIKA PENGIRIM: Memulai Share Screen
         async function connectToPeer() {
-            const targetId = document.getElementById('peer-id-input').value;
-            if (!targetId) return alert("ID tujuan wajib diisi!");
+            const targetId = document.getElementById('peer-id-input').value.trim();
+            if (!targetId) return alert("Silakan masukkan ID tujuan!");
+            if (targetId === myId) return alert("Tidak bisa mengirim ke ID sendiri!");
 
             try {
-                // Konfigurasi Stream berdasarkan mode
+                // Konfigurasi kualitas berdasarkan mode
                 const constraints = {
                     video: {
-                        displaySurface: "monitor",
-                        frameRate: { ideal: 30, max: 60 },
-                        width: (selectedMode === 'hp') ? { max: 720 } : { max: 1920 }
+                        width: (selectedMode === 'hp') ? { max: 720 } : { ideal: 1920 },
+                        frameRate: { ideal: 30 }
                     },
                     audio: true
                 };
 
+                // Ambil stream layar (Display Media)
                 activeStream = await navigator.mediaDevices.getDisplayMedia(constraints);
+                
+                // Kirim stream ke target
                 peer.call(targetId, activeStream);
                 
-                alert("Sedang mengirim layar...");
+                document.getElementById('stat-text').innerText = "Sedang Mengirim Layar...";
+                
+                // Event jika kita klik 'Stop Sharing' di browser
+                activeStream.getVideoTracks()[0].onended = () => stopStream();
+
             } catch (err) {
-                alert("Gagal Share Screen: " + err);
+                console.error("Gagal share screen:", err);
+                alert("Akses dibatalkan atau error: " + err.message);
             }
         }
 
+        // 4. Fungsi Berhenti
         function stopStream() {
             if (activeStream) {
                 activeStream.getTracks().forEach(track => track.stop());
             }
-            location.reload();
+            document.getElementById('video-overlay').style.display = 'none';
+            document.getElementById('remote-video').srcObject = null;
+            document.getElementById('stat-text').innerText = "Koneksi Berhenti";
         }
 
+        // 5. Salin ID ke Clipboard
         function copyID() {
+            if (!myId) return;
             navigator.clipboard.writeText(myId);
-            alert("ID disalin ke clipboard!");
+            const badge = document.getElementById('my-id');
+            const original = badge.innerText;
+            badge.innerText = "ID TERSALIN!";
+            badge.style.color = "#00ff88";
+            setTimeout(() => {
+                badge.innerText = original;
+                badge.style.color = "var(--main)";
+            }, 1500);
         }
     </script>
 </body>
